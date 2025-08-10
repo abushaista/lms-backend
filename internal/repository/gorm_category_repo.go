@@ -9,14 +9,22 @@ type GormCategoryRepository struct {
 	db *gorm.DB
 }
 
+// Delete implements domain.CategoryRepository.
+func (g *GormCategoryRepository) Delete(id uint) error {
+	return g.db.Delete(&domain.Category{}, id).Error
+}
+
 // Create implements domain.CategoryRepository.
-func (g *GormCategoryRepository) Create(category *domain.Category) error {
+func (g *GormCategoryRepository) Save(category *domain.Category) error {
+	if category.ID != 0 {
+		return g.db.Save(category).Error
+	}
 	return g.db.Create(category).Error
 }
 
 // GetAll implements domain.CategoryRepository.
-func (g *GormCategoryRepository) GetAll() ([]domain.Category, error) {
-	var categories []domain.Category
+func (g *GormCategoryRepository) GetAll() ([]*domain.Category, error) {
+	var categories []*domain.Category
 	if err := g.db.Find(&categories).Error; err != nil {
 		return nil, err
 	}
@@ -24,8 +32,8 @@ func (g *GormCategoryRepository) GetAll() ([]domain.Category, error) {
 }
 
 // GetByFilterAll implements domain.CategoryRepository.
-func (g *GormCategoryRepository) GetByFilterAll(page int, limit int, filter string) ([]domain.Category, int64, error) {
-	var categories []domain.Category
+func (g *GormCategoryRepository) GetByFilterAll(page int, limit int, filter string) ([]*domain.Category, int64, error) {
+	var categories []*domain.Category
 	var total int64
 	query := g.db.Model(&domain.Category{})
 	if filter != "" {
