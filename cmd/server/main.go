@@ -13,6 +13,7 @@ import (
 	"github.com/abushaista/lms-backend/internal/repository"
 	"github.com/abushaista/lms-backend/internal/usecase"
 	"github.com/joho/godotenv"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -36,20 +37,32 @@ func main() {
 		log.Fatalf("failed to connect database: %v", err)
 	}
 
-	if err := db.AutoMigrate(&domain.Book{}, &domain.Category{}); err != nil {
+	if err := db.AutoMigrate(&domain.Book{}, &domain.Category{}, &domain.User{}); err != nil {
 		log.Fatalf("failed to migrate: %v", err)
 	}
+
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Validator = validatorInfra.NewEchoValidator()
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
+
+	rUser := repository.NewGormUserRepository(db)
+	ucAuth := usecase.NewAuthUseCase(rUser, cfg.JWTSecret)
+
+	public := e.Group("api")
+	http.NewAuthHandler(public, ucAuth)
+
+	api := e.Group("/api")
+
+	api.Use(echojwt.WithConfig(echojwt.Config{
+		SigningKey: []byte(cfg.JWTSecret),
+	}))
 
 	rBook := repository.NewGormBookRepository(db)
 	ucBook := usecase.NewBookUsecase(rBook)
 	rCategory := repository.NewGormCategoryRepository(db)
 	ucCategory := usecase.NewCategoryUseCase(rCategory)
-	e := echo.New()
-	e.Use(middleware.Logger())
-	e.Validator = validatorInfra.NewEchoValidator()
 
-	e.GET("/swagger/*", echoSwagger.WrapHandler)
-	api := e.Group("/api")
 	http.NewBookHandler(api, ucBook)
 	http.NewCategoryHandler(api, ucCategory)
 
