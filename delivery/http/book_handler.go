@@ -22,13 +22,24 @@ func NewBookHandler(e *echo.Group, uc *usecase.BookUseCase) {
 		uc:       uc,
 		validate: validator.New(),
 	}
-	e.POST("/book", h.CreateBook)
-	e.GET("/book/:id", h.GetByID)
+	e.POST("/books", h.CreateBook)
+	e.GET("/books/:id", h.GetByID)
 	e.GET("/books", h.GetByFilterAll)
-	e.DELETE("book/:id", h.Delete)
-	e.PUT("/book/:id", h.UpdateBook)
+	e.DELETE("books/:id", h.Delete)
+	e.PUT("/books/:id", h.UpdateBook)
 }
 
+// CreateBook godoc
+// @Summary      Create a new book
+// @Description  Add a new book to the library
+// @Tags         books
+// @Accept       json
+// @Produce      json
+// @Param        body  body      dto.CreateBookRequest  true  "Create Book Payload"
+// @Success      201   {object}  domain.Book
+// @Failure      400   {object}  map[string]interface{}
+// @Failure      500   {object}  map[string]string
+// @Router       /books [post]
 func (h *BookHandler) CreateBook(c echo.Context) error {
 	var req dto.CreateBookRequest
 	if err := c.Bind(&req); err != nil {
@@ -46,6 +57,22 @@ func (h *BookHandler) CreateBook(c echo.Context) error {
 	return c.JSON(http.StatusCreated, book)
 }
 
+// GetByFilterAll godoc
+// @Summary      Get books by filters with pagination
+// @Description  Retrieve list of books filtered by title, author, summary, category, and year with pagination support
+// @Tags         books
+// @Accept       json
+// @Produce      json
+// @Param        page      query     int     false  "Page number"      default(1)
+// @Param        limit     query     int     false  "Items per page"   default(10)
+// @Param        title     query     string  false  "Filter by book title"
+// @Param        author    query     string  false  "Filter by author name"
+// @Param        summary   query     string  false  "Filter by book summary"
+// @Param        category  query     int     false  "Filter by category ID"
+// @Param        year      query     int     false  "Filter by publication year"
+// @Success      200       {object}  map[string]interface{}
+// @Failure      500       {object}  map[string]string
+// @Router       /books [get]
 func (h *BookHandler) GetByFilterAll(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	limit, _ := strconv.Atoi(c.QueryParam("limit"))
@@ -83,6 +110,16 @@ func (h *BookHandler) GetByFilterAll(c echo.Context) error {
 	})
 }
 
+// GetByID godoc
+// @Summary      Get a book by ID
+// @Description  Retrieve a single book by its ID
+// @Tags         books
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "Book ID"
+// @Success      200  {object}  domain.Book
+// @Failure      500  {object}  map[string]string
+// @Router       /books/{id} [get]
 func (h *BookHandler) GetByID(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -93,6 +130,17 @@ func (h *BookHandler) GetByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, data)
 }
 
+// Delete godoc
+// @Summary      Delete a book by ID
+// @Description  Delete a book from the system by its ID
+// @Tags         books
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "Book ID"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /books/{id} [delete]
 func (h *BookHandler) Delete(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -104,6 +152,18 @@ func (h *BookHandler) Delete(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"message": "book deleted"})
 }
 
+// UpdateBook godoc
+// @Summary      Update a book by ID
+// @Description  Update the details of an existing book by its ID
+// @Tags         books
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int                 true  "Book ID"
+// @Param        body  body      dto.UpdateBookRequest  true  "Update Book Payload"
+// @Success      200   {object}  domain.Book
+// @Failure      400   {object}  map[string]interface{}
+// @Failure      500   {object}  map[string]string
+// @Router       /books/{id} [put]
 func (h *BookHandler) UpdateBook(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

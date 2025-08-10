@@ -1,0 +1,473 @@
+basePath: /
+definitions:
+  domain.Book:
+    properties:
+      author:
+        type: string
+      available:
+        type: boolean
+      category:
+        $ref: '#/definitions/domain.Category'
+      category_id:
+        type: integer
+      cover_image_url:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      isbn:
+        type: string
+      summary:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      year:
+        type: integer
+    type: object
+  domain.Category:
+    properties:
+      books:
+        items:
+          $ref: '#/definitions/domain.Book'
+        type: array
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.CategoryRequest:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  dto.CreateBookRequest:
+    properties:
+      author:
+        type: string
+      available:
+        type: boolean
+      category_id:
+        type: integer
+      cover_image:
+        type: string
+      isbn:
+        type: string
+      summary:
+        type: string
+      title:
+        type: string
+      year:
+        type: integer
+    required:
+    - author
+    - available
+    - category_id
+    - isbn
+    - summary
+    - title
+    - year
+    type: object
+  dto.UpdateBookRequest:
+    properties:
+      author:
+        type: string
+      category_id:
+        type: integer
+      cover_image:
+        type: string
+      id:
+        type: integer
+      isbn:
+        type: string
+      summary:
+        type: string
+      title:
+        type: string
+      year:
+        type: integer
+    required:
+    - author
+    - category_id
+    - isbn
+    - summary
+    - title
+    - year
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Simple Library Management System in Go using Clean Architecture, Echo,
+    MySQL, GORM, and Swagger
+  title: Library Management API
+  version: "1.0"
+paths:
+  /books:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve list of books filtered by title, author, summary, category,
+        and year with pagination support
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by book title
+        in: query
+        name: title
+        type: string
+      - description: Filter by author name
+        in: query
+        name: author
+        type: string
+      - description: Filter by book summary
+        in: query
+        name: summary
+        type: string
+      - description: Filter by category ID
+        in: query
+        name: category
+        type: integer
+      - description: Filter by publication year
+        in: query
+        name: year
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get books by filters with pagination
+      tags:
+      - books
+    post:
+      consumes:
+      - application/json
+      description: Add a new book to the library
+      parameters:
+      - description: Create Book Payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateBookRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Book'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new book
+      tags:
+      - books
+  /books/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a book from the system by its ID
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a book by ID
+      tags:
+      - books
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single book by its ID
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Book'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a book by ID
+      tags:
+      - books
+    put:
+      consumes:
+      - application/json
+      description: Update the details of an existing book by its ID
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update Book Payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateBookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Book'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update a book by ID
+      tags:
+      - books
+  /categories:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of categories filtered by a search string with
+        pagination
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter string
+        in: query
+        name: filter
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get categories by filter with pagination
+      tags:
+      - categories
+    post:
+      consumes:
+      - application/json
+      description: Add a new category to the system
+      parameters:
+      - description: Category payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Category'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new category
+      tags:
+      - categories
+  /categories/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a category from the system by its ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a category by ID
+      tags:
+      - categories
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single category by its ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Category'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a category by ID
+      tags:
+      - categories
+    put:
+      consumes:
+      - application/json
+      description: Update category details by its ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Category payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Category'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update a category by ID
+      tags:
+      - categories
+swagger: "2.0"

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/abushaista/lms-backend/delivery/http"
+	_ "github.com/abushaista/lms-backend/docs"
 	"github.com/abushaista/lms-backend/infrastructure/config"
 	"github.com/abushaista/lms-backend/infrastructure/database"
 	validatorInfra "github.com/abushaista/lms-backend/infrastructure/validator"
@@ -13,8 +14,14 @@ import (
 	"github.com/abushaista/lms-backend/internal/usecase"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
+// @title Library Management API
+// @version 1.0
+// @description Simple Library Management System in Go using Clean Architecture, Echo, MySQL, GORM, and Swagger
+// @host localhost:8080
+// @BasePath /
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -39,6 +46,7 @@ func main() {
 	e := echo.New()
 	e.Validator = validatorInfra.NewEchoValidator()
 
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 	api := e.Group("/api")
 	http.NewBookHandler(api, ucBook)
 	http.NewCategoryHandler(api, ucCategory)
