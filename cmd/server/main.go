@@ -14,6 +14,7 @@ import (
 	"github.com/abushaista/lms-backend/internal/usecase"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
@@ -44,6 +45,7 @@ func main() {
 	rCategory := repository.NewGormCategoryRepository(db)
 	ucCategory := usecase.NewCategoryUseCase(rCategory)
 	e := echo.New()
+	e.Use(middleware.Logger())
 	e.Validator = validatorInfra.NewEchoValidator()
 
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
