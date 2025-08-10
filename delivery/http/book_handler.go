@@ -17,7 +17,7 @@ type BookHandler struct {
 	validate *validator.Validate
 }
 
-func NewBookHandler(e *echo.Echo, uc *usecase.BookUseCase) {
+func NewBookHandler(e *echo.Group, uc *usecase.BookUseCase) {
 	h := &BookHandler{
 		uc:       uc,
 		validate: validator.New(),

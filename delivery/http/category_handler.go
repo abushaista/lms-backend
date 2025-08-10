@@ -16,7 +16,7 @@ type CategoryHandler struct {
 	validate *validator.Validate
 }
 
-func NewCategoryHandler(e *echo.Echo, uc *usecase.CategoryUseCase) {
+func NewCategoryHandler(e *echo.Group, uc *usecase.CategoryUseCase) {
 	h := &CategoryHandler{
 		uc:       uc,
 		validate: validator.New(),
