@@ -7,6 +7,7 @@ import (
 	"github.com/abushaista/lms-backend/delivery/http"
 	"github.com/abushaista/lms-backend/infrastructure/config"
 	"github.com/abushaista/lms-backend/infrastructure/database"
+	validatorInfra "github.com/abushaista/lms-backend/infrastructure/validator"
 	"github.com/abushaista/lms-backend/internal/domain"
 	"github.com/abushaista/lms-backend/internal/repository"
 	"github.com/abushaista/lms-backend/internal/usecase"
@@ -36,6 +37,7 @@ func main() {
 	rCategory := repository.NewGormCategoryRepository(db)
 	ucCategory := usecase.NewCategoryUseCase(rCategory)
 	e := echo.New()
+	e.Validator = validatorInfra.NewEchoValidator()
 
 	api := e.Group("/api")
 	http.NewBookHandler(api, ucBook)

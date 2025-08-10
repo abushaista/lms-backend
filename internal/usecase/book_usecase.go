@@ -30,6 +30,7 @@ func (uc *BookUseCase) CreateBook(req dto.CreateBookRequest) (*domain.Book, erro
 		Summary:       req.Summary,
 		CoverImageURL: req.CoverImage,
 		CategoryID:    req.CategoryID,
+		Available:     req.Available,
 	}
 	id, err := uc.repo.Save(&book)
 	// Save to DB

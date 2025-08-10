@@ -6,8 +6,9 @@ type CreateBookRequest struct {
 	ISBN       string `json:"isbn" validate:"required"`
 	Year       int    `json:"year" validate:"required"`
 	Summary    string `json:"summary" validate:"required"`
-	CoverImage string `json:"cover_image" validate:"url"`
+	CoverImage string `json:"cover_image" validate:"omitempty,url"`
 	CategoryID uint   `json:"category_id" validate:"required"`
+	Available  bool   `json:"available" validate:"required"`
 }
 
 type UpdateBookRequest struct {
@@ -17,6 +18,6 @@ type UpdateBookRequest struct {
 	ISBN       string `json:"isbn" validate:"required"`
 	Year       int    `json:"year" validate:"required"`
 	Summary    string `json:"summary" validate:"required"`
-	CoverImage string `json:"cover_image" validate:"url"`
+	CoverImage string `json:"cover_image" validate:"omitempty,url"`
 	CategoryID uint   `json:"category_id" validate:"required"`
 }
