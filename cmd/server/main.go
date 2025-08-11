@@ -5,9 +5,11 @@ import (
 	"os"
 
 	"github.com/abushaista/lms-backend/delivery/http"
+	libMiddleWare "github.com/abushaista/lms-backend/delivery/middleware"
 	_ "github.com/abushaista/lms-backend/docs"
 	"github.com/abushaista/lms-backend/infrastructure/config"
 	"github.com/abushaista/lms-backend/infrastructure/database"
+	"github.com/abushaista/lms-backend/infrastructure/logger"
 	validatorInfra "github.com/abushaista/lms-backend/infrastructure/validator"
 	"github.com/abushaista/lms-backend/internal/domain"
 	"github.com/abushaista/lms-backend/internal/repository"
@@ -40,9 +42,12 @@ func main() {
 	if err := db.AutoMigrate(&domain.Book{}, &domain.Category{}, &domain.User{}); err != nil {
 		log.Fatalf("failed to migrate: %v", err)
 	}
+	rootLogger := logger.NewLogger()
 
 	e := echo.New()
 	e.Use(middleware.Logger())
+	e.Use(libMiddleWare.CorrelationMiddleware)
+	e.Use(libMiddleWare.AttachRequestLogger(rootLogger))
 	e.Validator = validatorInfra.NewEchoValidator()
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
@@ -50,7 +55,7 @@ func main() {
 	ucAuth := usecase.NewAuthUseCase(rUser, cfg.JWTSecret)
 
 	public := e.Group("api")
-	http.NewAuthHandler(public, ucAuth)
+	http.NewAuthHandler(public, ucAuth, rootLogger)
 
 	api := e.Group("/api")
 
@@ -63,7 +68,7 @@ func main() {
 	rCategory := repository.NewGormCategoryRepository(db)
 	ucCategory := usecase.NewCategoryUseCase(rCategory)
 
-	http.NewBookHandler(api, ucBook)
+	http.NewBookHandler(api, ucBook, rootLogger)
 	http.NewCategoryHandler(api, ucCategory)
 
 	port := os.Getenv("PORT")

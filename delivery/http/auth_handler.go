@@ -8,16 +8,20 @@ import (
 	"github.com/abushaista/lms-backend/internal/usecase"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog"
 )
 
 type AuthHandler struct {
-	uc       *usecase.AuthUseCase
-	validate *validator.Validate
+	uc         *usecase.AuthUseCase
+	validate   *validator.Validate
+	rootLogger zerolog.Logger
 }
 
-func NewAuthHandler(e *echo.Group, uc *usecase.AuthUseCase) {
+func NewAuthHandler(e *echo.Group, uc *usecase.AuthUseCase, logger zerolog.Logger) {
 	h := &AuthHandler{uc: uc,
-		validate: validator.New()}
+		validate:   validator.New(),
+		rootLogger: logger,
+	}
 	e.POST("/register", h.Create)
 	e.POST("/login", h.Login)
 }
@@ -32,15 +36,19 @@ func NewAuthHandler(e *echo.Group, uc *usecase.AuthUseCase) {
 // @Failure 400 {object} map[string]string
 // @Router /api/register [post]
 func (h AuthHandler) Create(c echo.Context) error {
+	logger := utils.WithRequestLogger(h.rootLogger, c)
 	var req dto.CreateUserRequest
 	if err := c.Bind(&req); err != nil {
+		logger.Warn().Err(err).Msg("bind user")
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid request payload"})
 	}
 	if err := c.Validate(&req); err != nil {
+		logger.Warn().Err(err).Msg("invalid payload")
 		return c.JSON(http.StatusBadRequest, utils.FormatValidationErrors(err))
 	}
 	_, err := h.uc.Create(req)
 	if err != nil {
+		logger.Warn().Err(err).Msg("500 internal server error")
 		return c.JSON(http.StatusUnauthorized, echo.Map{"error": err.Error()})
 	}
 	return c.JSON(http.StatusCreated, echo.Map{"message": "user registered"})

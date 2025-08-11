@@ -10,17 +10,20 @@ import (
 	"github.com/abushaista/lms-backend/internal/usecase"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog"
 )
 
 type BookHandler struct {
-	uc       *usecase.BookUseCase
-	validate *validator.Validate
+	uc         *usecase.BookUseCase
+	validate   *validator.Validate
+	rootLogger zerolog.Logger
 }
 
-func NewBookHandler(e *echo.Group, uc *usecase.BookUseCase) {
+func NewBookHandler(e *echo.Group, uc *usecase.BookUseCase, logger zerolog.Logger) {
 	h := &BookHandler{
-		uc:       uc,
-		validate: validator.New(),
+		uc:         uc,
+		validate:   validator.New(),
+		rootLogger: logger,
 	}
 	e.POST("/books", h.CreateBook)
 	e.GET("/books/:id", h.GetByID)
@@ -41,8 +44,10 @@ func NewBookHandler(e *echo.Group, uc *usecase.BookUseCase) {
 // @Failure      500   {object}  map[string]string
 // @Router       /books [post]
 func (h *BookHandler) CreateBook(c echo.Context) error {
+	logger := utils.WithRequestLogger(h.rootLogger, c)
 	var req dto.CreateBookRequest
 	if err := c.Bind(&req); err != nil {
+		logger.Warn().Err(err).Msg("bind books")
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid request payload"})
 	}
 
@@ -74,6 +79,7 @@ func (h *BookHandler) CreateBook(c echo.Context) error {
 // @Failure      500       {object}  map[string]string
 // @Router       /books [get]
 func (h *BookHandler) GetByFilterAll(c echo.Context) error {
+	logger := utils.WithRequestLogger(h.rootLogger, c)
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	limit, _ := strconv.Atoi(c.QueryParam("limit"))
 
@@ -101,6 +107,7 @@ func (h *BookHandler) GetByFilterAll(c echo.Context) error {
 
 	books, total, err := h.uc.GetByFilterAll(page, limit, filter)
 	if err != nil {
+		logger.Error().Err(err).Msg("500 internal server error")
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -121,10 +128,12 @@ func (h *BookHandler) GetByFilterAll(c echo.Context) error {
 // @Failure      500  {object}  map[string]string
 // @Router       /books/{id} [get]
 func (h *BookHandler) GetByID(c echo.Context) error {
+	logger := utils.WithRequestLogger(h.rootLogger, c)
 	id, _ := strconv.Atoi(c.Param("id"))
 
 	data, err := h.uc.GetByID(int64(id))
 	if err != nil {
+		logger.Error().Err(err).Msg("500 internal server error")
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
 	}
 	return c.JSON(http.StatusOK, data)
@@ -142,11 +151,14 @@ func (h *BookHandler) GetByID(c echo.Context) error {
 // @Failure      500  {object}  map[string]string
 // @Router       /books/{id} [delete]
 func (h *BookHandler) Delete(c echo.Context) error {
+	logger := utils.WithRequestLogger(h.rootLogger, c)
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
+		logger.Error().Err(err).Msg("invalid id")
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
 	}
 	if err := h.uc.DeleteBook(int64(id)); err != nil {
+		logger.Error().Err(err).Msg("500 internal server error")
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
 	}
 	return c.JSON(http.StatusOK, map[string]string{"message": "book deleted"})
@@ -165,20 +177,24 @@ func (h *BookHandler) Delete(c echo.Context) error {
 // @Failure      500   {object}  map[string]string
 // @Router       /books/{id} [put]
 func (h *BookHandler) UpdateBook(c echo.Context) error {
+	logger := utils.WithRequestLogger(h.rootLogger, c)
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
 	}
 	var req dto.UpdateBookRequest
 	if err := c.Bind(&req); err != nil {
+		logger.Warn().Err(err).Msg("invalid payload")
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid request payload"})
 	}
 	req.ID = int64(id)
 	if err := c.Validate(&req); err != nil {
+		logger.Warn().Err(err).Msg("invalid payload")
 		return c.JSON(http.StatusBadRequest, utils.FormatValidationErrors(err))
 	}
 	book, err := h.uc.UpdateBook(req)
 	if err != nil {
+		logger.Warn().Err(err).Msg("500 internal server error")
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
 	}
 	return c.JSON(http.StatusOK, book)

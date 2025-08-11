@@ -29,7 +29,7 @@ func (g *GormBookRepository) Delete(id int64) error {
 func (g *GormBookRepository) GetAll(page, limit int, filter domain.BookFilter) ([]*domain.Book, int64, error) {
 	var books []*domain.Book
 	var total int64
-	query := g.db.Model(&domain.Book{})
+	query := g.db.Model(&domain.Book{}).Preload("Category")
 
 	if filter.Title != "" {
 		query = query.Where("title LIKE ?", "%"+filter.Title+"%")
@@ -60,7 +60,7 @@ func (g *GormBookRepository) GetAll(page, limit int, filter domain.BookFilter) (
 // GetByID implements domain.BookRepository.
 func (g *GormBookRepository) GetByID(id int64) (*domain.Book, error) {
 	var book domain.Book
-	if err := g.db.First(&book, id).Error; err != nil {
+	if err := g.db.First(&book, id).Preload("Category").Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
