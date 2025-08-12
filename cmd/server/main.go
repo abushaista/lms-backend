@@ -57,6 +57,10 @@ func main() {
 	public := e.Group("api")
 	http.NewAuthHandler(public, ucAuth, rootLogger)
 
+	ucClean := usecase.NewCleanUpUsecase()
+
+	http.NewCleanUpHandler(public, ucClean, rootLogger)
+
 	api := e.Group("/api")
 
 	api.Use(echojwt.WithConfig(echojwt.Config{
